@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:leancloud_play_flutter/client.dart';
+import 'package:leancloud_play_flutter_example/secret.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +51,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  Client client = Client(
+    userId: 'player01',
+    appId: getAppId(),
+    appKey: getAppKey(),
+    playServer: getServer(),
+  );
+
+  @override
+  void initState() {
+    go();
+    super.initState();
+  }
+
+  Future<void> go() async {
+    await client.connect();
+  }
 
   void _incrementCounter() {
     setState(() {
