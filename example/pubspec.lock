@@ -43,6 +43,20 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.15.0"
+  crypto:
+    dependency: transitive
+    description:
+      name: crypto
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.2"
+  csslib:
+    dependency: transitive
+    description:
+      name: csslib
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.17.1"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -50,6 +64,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.4"
+  eventify:
+    dependency: transitive
+    description:
+      name: eventify
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -57,6 +78,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.2.0"
+  fixnum:
+    dependency: transitive
+    description:
+      name: fixnum
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -74,6 +102,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  html:
+    dependency: "direct main"
+    description:
+      name: html
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.15.0"
   http:
     dependency: transitive
     description:
@@ -130,6 +165,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.8.0"
+  protobuf:
+    dependency: transitive
+    description:
+      name: protobuf
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -149,6 +191,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.10.0"
+  statemachine:
+    dependency: transitive
+    description:
+      name: statemachine
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.2.0"
   stream_channel:
     dependency: transitive
     description:
@@ -191,6 +240,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.1"
+  web_socket_channel:
+    dependency: transitive
+    description:
+      name: web_socket_channel
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
 sdks:
   dart: ">=2.16.1 <3.0.0"
   flutter: ">=1.17.0"

@@ -34,8 +34,7 @@ class AppRouter {
   Future<String> _fetch() async {
     var uri = Uri.parse('https://app-router.leancloud.cn/2/route?appId=$appId');
     try {
-      var client = http.Client();
-      var res = await client.get(uri);
+      var res = await http.get(uri);
       var body = jsonDecode(res.body) as Map;
       if (body.containsKey('play_server')) {
         playServer = body['play_server'];
