@@ -91,10 +91,7 @@ class Client {
       pluginName: pluginName,
       expectedUserIds: expectedUserIds,
     );
-    print("yes!!!!");
     return room!;
-    // await room.connect
-    // room.
   }
 }
 

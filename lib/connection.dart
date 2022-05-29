@@ -246,7 +246,7 @@ abstract class Connection extends EventEmitter {
       pingTimer = null;
     }
 
-    pingTimer = Timer(getPingDuration(), () {
+    pingTimer = Timer.periodic(getPingDuration(), (timer) {
       debug('ping');
       sendCommand(CommandType.echo, OpType.none, Body());
     });
