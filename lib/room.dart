@@ -1,14 +1,29 @@
 import 'package:fixnum/fixnum.dart';
 import 'package:leancloud_play_flutter/client.dart';
+import 'package:leancloud_play_flutter/code_utils.dart';
 import 'package:leancloud_play_flutter/fsm.dart';
 import 'package:leancloud_play_flutter/game_connection.dart';
 import 'package:leancloud_play_flutter/logger.dart';
+import 'package:leancloud_play_flutter/play_error.dart';
+import 'package:leancloud_play_flutter/play_error_code.dart';
+import 'package:leancloud_play_flutter/player.dart';
+import 'package:leancloud_play_flutter/proto/messages.pb.dart';
 import 'package:statemachine/statemachine.dart';
 
 class Room {
   Client client;
   StateMachine fsm = StateMachine();
-  late GameConnection gameConn;
+  GameConnection? gameConn;
+
+  String? name;
+  bool? open;
+  bool? visible;
+  int? maxPlayerCount;
+  int? masterActorId;
+  List<String>? expectedUserIds;
+  Map<int, Player>? players;
+  Player? player;
+  Map<String, dynamic>? properties;
 
   Room(this.client) {
     fsm.newStartState('init');
@@ -58,7 +73,7 @@ class Room {
       var sessionToken = (await lobbyService.authorize())['sessionToken'];
       // 合并
       gameConn = GameConnection();
-      await gameConn.connect(
+      await gameConn!.connect(
         appId: client.appId,
         server: addr,
         gameVersion: client.gameVersion,
@@ -66,7 +81,7 @@ class Room {
         sessionToken: sessionToken,
       );
 
-      var room = await gameConn.createRoom(
+      var room = await gameConn!.createRoom(
         roomName: cid,
         open: open,
         visible: visible,
@@ -79,37 +94,70 @@ class Room {
         pluginName: pluginName,
         expectedUserIds: expectedUserIds,
       );
-      // _init(room);
+      _init(room);
       fsm.callStateTransition('joined');
     } catch (e, st) {
-      print(e);
-      print(st);
+      await close();
       rethrow;
     }
+  }
 
-    _init(roomData) {
-      print("_init");
-      // this._name = roomData.getCid();
-      // this._open = roomData.getOpen().getValue();
-      // this._visible = roomData.getVisible().getValue();
-      // this._maxPlayerCount = roomData.getMaxMembers();
-      // this._masterActorId = roomData.getMasterActorId();
-      // this._expectedUserIds = roomData.getExpectMembersList();
-      // this._players = {};
-      // roomData.getMembersList().forEach(member => {
-      //   const player = new Player(this);
-      //   player._init(member);
-      //   this._players[player.actorId] = player;
-      //   if (player._userId === this._client._userId) {
-      //     this._player = player;
-      //   }
-      // });
-      // // 属性
-      // if (roomData.getAttr()) {
-      //   this._properties = deserializeObject(roomData.getAttr());
-      // } else {
-      //   this._properties = {};
-      // }
+  _init(RoomOptions roomData) {
+    name = roomData.cid;
+    open = roomData.open.value;
+    visible = roomData.visible.value;
+    maxPlayerCount = roomData.maxMembers;
+    masterActorId = roomData.masterActorId;
+    expectedUserIds = roomData.expectMembers;
+    players = {};
+    for (var member in roomData.members) {
+      var player = Player(this);
+      player.init(member);
+      players![player.actorId] = player;
+      if (player.userId == client.userId) {
+        this.player = player;
+      }
     }
+    // 属性
+    if (roomData.hasAttr()) {
+      properties = deserializeObject(roomData.attr);
+    } else {
+      properties = {};
+    }
+
+    // this._name = roomData.getCid();
+    // this._open = roomData.getOpen().getValue();
+    // this._visible = roomData.getVisible().getValue();
+    // this._maxPlayerCount = roomData.getMaxMembers();
+    // this._masterActorId = roomData.getMasterActorId();
+    // this._expectedUserIds = roomData.getExpectMembersList();
+    // this._players = {};
+    // roomData.getMembersList().forEach(member => {
+    //   const player = new Player(this);
+    //   player._init(member);
+    //   this._players[player.actorId] = player;
+    //   if (player._userId === this._client._userId) {
+    //     this._player = player;
+    //   }
+    // });
+    // // 属性
+    // if (roomData.getAttr()) {
+    //   this._properties = deserializeObject(roomData.getAttr());
+    // } else {
+    //   this._properties = {};
+    // }
+  }
+
+  Future<void> close() async {
+    if (!fsm.canCallStateTransition('close')) {
+      throw PlayError(
+          code: PlayErrorCode.STATE_ERROR,
+          detail: 'Error state: ${fsm.current.toString()}');
+    }
+    if (gameConn != null) {
+      await gameConn!.close();
+    }
+    client.room = null;
+    fsm.callStateTransition('close');
   }
 }

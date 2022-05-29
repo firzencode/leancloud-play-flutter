@@ -3,11 +3,25 @@ import 'package:leancloud_play_flutter/code_utils.dart';
 import 'package:leancloud_play_flutter/connection.dart';
 import 'package:leancloud_play_flutter/proto/google/protobuf/wrappers.pbserver.dart';
 import 'package:leancloud_play_flutter/proto/messages.pb.dart';
-import 'package:leancloud_play_flutter/proto/messages.pbenum.dart';
 import 'package:leancloud_play_flutter/utils.dart';
+import 'package:path/path.dart' as path;
 
 import 'logger.dart';
-import 'package:path/path.dart' as path;
+
+// 游戏连接抛出的事件
+const PLAYER_JOINED_EVENT = 'PLAYER_JOINED_EVENT';
+const PLAYER_LEFT_EVENT = 'PLAYER_LEFT_EVENT';
+const MASTER_CHANGED_EVENT = 'MASTER_CHANGED_EVENT';
+const ROOM_OPEN_CHANGED_EVENT = 'ROOM_OPEN_CHANGED_EVENT';
+const ROOM_VISIBLE_CHANGED_EVENT = 'ROOM_VISIBLE_CHANGED_EVENT';
+const ROOM_PROPERTIES_CHANGED_EVENT = 'ROOM_PROPERTIES_CHANGED_EVENT';
+const ROOM_SYSTEM_PROPERTIES_CHANGED_EVENT =
+    'ROOM_SYSTEM_PROPERTIES_CHANGED_EVENT';
+const PLAYER_PROPERTIES_CHANGED_EVENT = 'PLAYER_PROPERTIES_CHANGED_EVENT';
+const PLAYER_OFFLINE_EVENT = 'PLAYER_OFFLINE_EVENT';
+const PLAYER_ONLINE_EVENT = 'PLAYER_ONLINE_EVENT';
+const SEND_CUSTOM_EVENT = 'SEND_CUSTOM_EVENT';
+const ROOM_KICKED_EVENT = 'ROOM_KICKED_EVENT';
 
 const MAX_PLAYER_COUNT = 10;
 const GAME_KEEPALIVE_DURATION = 7000;
@@ -110,7 +124,7 @@ class GameConnection extends Connection {
     var createRoomReq = CreateRoomRequest(roomOptions: roomOpts);
     req.createRoom = createRoomReq;
     var res = (await sendRequest(CommandType.conv, OpType.start, req)).res;
-    return res.createRoom.roomOptions; // 这里错了，应该是 body 的 res
+    return res.createRoom.roomOptions;
   }
 
   @override

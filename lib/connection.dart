@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:eventify/eventify.dart';
 import 'package:leancloud_play_flutter/fsm.dart';
 import 'package:leancloud_play_flutter/play_error.dart';
 import 'package:leancloud_play_flutter/play_error_code.dart';
@@ -36,7 +37,14 @@ class Message {
   });
 }
 
-abstract class Connection {
+class ErrorEventData {
+  int code;
+  String detail;
+
+  ErrorEventData({required this.code, required this.detail});
+}
+
+abstract class Connection extends EventEmitter {
   var requests = <int, Completer<Message>>{};
   int msgId = 0;
   Timer? pingTimer;
@@ -46,8 +54,8 @@ abstract class Connection {
   StateMachine fsm = StateMachine();
 
   late WebSocket ws;
-  // late WebSocketChannel ws;
   late String userId;
+  StreamSubscription? wsListener;
 
   String get flag;
 
@@ -92,49 +100,59 @@ abstract class Connection {
     url = '$url&i=$i';
     debug('url: $url');
     var completer = Completer<Message>();
+
+    // 尝试建立连接
     try {
       ws = await WebSocket.connect(url, protocols: ['protobuf.1']);
-      debug('$userId : $flag connection open');
-      if (fsm.current?.identifier == 'closed') {
-        ws.close();
-        return Future.error('unknown error, open ws but fsm closed');
-      }
-      // 每次连接成功后将会得到最新快照，之前的缓存没有意义了
-      isMessageQueueRunning = true;
-      messageQueue = [];
-      _ping();
-      ws.listen((event) {
-        // debug(event.runtimeType.toString());
-        _pong();
-        var command = Command.fromBuffer(event);
-        var cmd = command.cmd;
-        var op = command.op;
-        var body = Body.fromBuffer(command.body);
-        debug(
-            '$userId : $flag <- ${cmd.name}/${op.name}}: ${body.writeToJson()}');
-        if (isMessageQueueRunning) {
-          _handleCommand(cmd, op, body);
-        } else {
-          debug(
-              '[DELAY] $userId : $flag <- ${cmd.name}/${op.name}}: ${body.writeToJson()}');
-          messageQueue.add(MessageQueueItem(cmd: cmd, op: op, body: body));
-        }
-      }, onError: (error) {
-        fsm.callStateTransition('connectFailed');
-        completer.completeError(error);
-      }, onDone: () {
-        fsm.callStateTransition('connectFailed');
-        completer.completeError(PlayError(
-            code: PlayErrorCode.OPEN_WEBSOCKET_ERROR,
-            detail: 'websocket closed'));
-      });
-      fsm.callStateTransition('connected');
-      // 标记
-      requests[i] = completer;
-      return completer.future;
     } catch (e) {
-      return Future.error(e);
+      error(e.toString());
+      return Future.error(PlayError(
+          code: PlayErrorCode.OPEN_WEBSOCKET_ERROR,
+          detail: 'websocket closed'));
     }
+    debug('$userId : $flag connection open');
+    // 错误的状态
+    if (fsm.current?.identifier == 'closed') {
+      await wsListener?.cancel();
+      ws.close();
+      return Future.error('unknown error, open ws but fsm closed');
+    }
+
+    // 每次连接成功后将会得到最新快照，之前的缓存没有意义了
+    isMessageQueueRunning = true;
+    messageQueue = [];
+    _ping();
+    wsListener = ws.listen((event) {
+      // debug(event.runtimeType.toString());
+      _pong();
+      var command = Command.fromBuffer(event);
+      var cmd = command.cmd;
+      var op = command.op;
+      var body = Body.fromBuffer(command.body);
+      debug('$userId : $flag <- ${cmd.name}/${op.name}: ${body.writeToJson()}');
+      if (isMessageQueueRunning) {
+        _handleCommand(cmd, op, body);
+      } else {
+        debug(
+            '[DELAY] $userId : $flag <- ${cmd.name}/${op.name}: ${body.writeToJson()}');
+        messageQueue.add(MessageQueueItem(cmd: cmd, op: op, body: body));
+      }
+    }, onError: (error) {
+      // 源代码里没有地方处理 error？？
+      // fsm.callStateTransition('connectFailed');
+      // if (!completer.isCompleted) {
+      //   completer.completeError(error);
+      // }
+    }, onDone: () {
+      _stopKeppAlive();
+      fsm.callStateTransition('disconnect');
+      emit(DISCONNECT_EVENT);
+    });
+
+    fsm.callStateTransition('connected');
+    // 标记
+    requests[i] = completer;
+    return completer.future;
   }
 
   void _handleCommand(CommandType cmd, OpType op, Body body) {
@@ -148,11 +166,16 @@ abstract class Connection {
           var errorInfo = res.errorInfo;
           var code = errorInfo.reasonCode;
           var detail = errorInfo.detail;
-          completer.completeError(PlayError(code: code, detail: detail));
+          if (!completer.isCompleted) {
+            completer.completeError(PlayError(code: code, detail: detail));
+          }
         } else {
-          completer.complete(Message(cmd: cmd, op: op, res: res));
+          if (!completer.isCompleted) {
+            completer.complete(Message(cmd: cmd, op: op, res: res));
+          }
         }
       } else {
+        // 异常情况
         error('error response: ${res.writeToJson()}');
       }
     } else {
@@ -182,9 +205,18 @@ abstract class Connection {
     ws.add(command.writeToBuffer());
   }
 
-  void close() {
+  Future<void> close() async {
     if (!fsm.canCallStateTransition('close')) {
       throw Exception('no close: ${fsm.current?.identifier}');
+    }
+    _stopKeppAlive();
+    try {
+      debug('$userId : $flag close');
+      await wsListener?.cancel();
+      await ws.close();
+      debug('$userId : $flag closed');
+    } catch (e) {
+      return Future.error(e);
     }
   }
 
@@ -196,6 +228,12 @@ abstract class Connection {
     required String userId,
     required String sessionToken,
   });
+
+  Future<void> simulateDisconnect() async {
+    close();
+    emit(DISCONNECT_EVENT);
+    return;
+  }
 
   int _getMsgId() {
     msgId += 1;
@@ -244,12 +282,16 @@ abstract class Connection {
   // abstract
   void handleNotification(CommandType cmd, OpType op, Body body);
 
-  handleErrorNotify(err) {
-    // TODO
+  void handleErrorNotify(ErrorCommand err) {
+    var errorInfo = err.errorInfo;
+    var code = errorInfo.reasonCode;
+    var detail = errorInfo.detail;
+    emit(ERROR_EVENT, this, ErrorEventData(code: code, detail: detail));
   }
 
-  handleUnknownMsg(cmd, op, body) {
-    // TODO
+  void handleUnknownMsg(CommandType cmd, OpType op, Body body) {
+    error(
+        '[UNKNOWN COMMAND] $userId : $flag -> $cmd/$op: ${body.writeToJson()}');
   }
 
   pauseMessageQueue() {
@@ -258,7 +300,7 @@ abstract class Connection {
 
   resumeMessageQueue() {
     isMessageQueueRunning = true;
-    while (messageQueue.length > 0) {
+    while (messageQueue.isNotEmpty) {
       var msg = messageQueue.removeAt(0);
       var cmd = msg.cmd;
       var op = msg.op;
