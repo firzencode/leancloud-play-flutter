@@ -127,6 +127,30 @@ class GameConnection extends Connection {
     return res.createRoom.roomOptions;
   }
 
+  Future<RoomOptions> joinRoom({
+    required String roomName,
+    Map<String, dynamic>? matchProperties,
+    List<String>? expectedUserIds,
+  }) async {
+    var req = RequestMessage();
+    var joinRoomReq = JoinRoomRequest();
+    var roomOpts = RoomOptions();
+    roomOpts.cid = roomName;
+
+    if (matchProperties != null) {
+      joinRoomReq.expectAttr = serializeObject(matchProperties)!;
+    }
+    if (expectedUserIds != null) {
+      roomOpts.expectMembers.clear();
+      roomOpts.expectMembers.addAll(expectedUserIds);
+    }
+    joinRoomReq.roomOptions = roomOpts;
+    req.joinRoom = joinRoomReq;
+
+    var msg = await sendRequest(CommandType.conv, OpType.add, req);
+    return msg.res.joinRoom.roomOptions;
+  }
+
   @override
   String getFastOpenUrl({
     required String server,

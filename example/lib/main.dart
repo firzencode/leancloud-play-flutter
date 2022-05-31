@@ -59,6 +59,12 @@ class _MyHomePageState extends State<MyHomePage> {
     appKey: getAppKey(),
     playServer: getServer(),
   );
+  Client client2 = Client(
+    userId: 'player02',
+    appId: getAppId(),
+    appKey: getAppKey(),
+    playServer: getServer(),
+  );
 
   @override
   void initState() {
@@ -71,6 +77,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //     'https://apiv3.shanbay.com/uc/apidocs#/Checkin/get_uc_checkin_status'));
 
     await client.connect();
+    print("client 01 完成连接");
+    await client2.connect();
+    print("client 02 完成连接");
   }
 
   void _incrementCounter() {
@@ -95,10 +104,19 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             children: [
               TextButton(
-                  onPressed: () {
-                    client.createRoom(roomName: "123");
-                  },
-                  child: Text("click me to create room"))
+                onPressed: () async {
+                  await client.createRoom(roomName: "123");
+                  print("房间已创建");
+                },
+                child: Text("click me to create room"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await client2.joinRoom(roomName: "123");
+                  print("房间已加入");
+                },
+                child: Text("click me to join room"),
+              ),
             ],
           ),
         ));

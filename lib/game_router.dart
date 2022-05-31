@@ -4,6 +4,13 @@ import 'package:leancloud_play_flutter/app_router.dart';
 import 'package:leancloud_play_flutter/logger.dart';
 import 'package:http/http.dart' as http;
 
+class AuthorizeResult {
+  String url;
+  String sessionToken;
+
+  AuthorizeResult({required this.url, required this.sessionToken});
+}
+
 class GameRouter {
   String appId;
   String appKey;
@@ -23,12 +30,9 @@ class GameRouter {
     required this.server,
   }) : appRouter = AppRouter(appId: appId, playServer: server);
 
-  Future<dynamic> authorize() async {
+  Future<AuthorizeResult> authorize() async {
     if (_isValid()) {
-      return {
-        "url": url,
-        "sessionToken": sessionToken,
-      };
+      return AuthorizeResult(url: url!, sessionToken: sessionToken!);
     }
     try {
       var gameRouterUrl = await appRouter.fetch();
@@ -45,10 +49,7 @@ class GameRouter {
       url = body['lobbyAddr'];
       serverValidTimeStamp =
           DateTime.now().millisecondsSinceEpoch + (body['ttl'] as int) * 1000;
-      return {
-        "url": url,
-        "sessionToken": sessionToken,
-      };
+      return AuthorizeResult(url: url!, sessionToken: sessionToken!);
     } catch (e) {
       error(e.toString());
       return Future.error(e);

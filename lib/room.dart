@@ -67,10 +67,10 @@ class Room {
     fsm.callStateTransition('join');
     try {
       var lobbyService = client.lobbyService;
-      var createRoomResp = await lobbyService.createRoom(roomName);
-      var cid = createRoomResp['cid'];
-      var addr = createRoomResp['addr'];
-      var sessionToken = (await lobbyService.authorize())['sessionToken'];
+      var createRoomResp = await lobbyService!.createRoom(roomName);
+      var cid = createRoomResp.cid;
+      var addr = createRoomResp.addr;
+      var sessionToken = (await lobbyService.authorize()).sessionToken;
       // 合并
       gameConn = GameConnection();
       await gameConn!.connect(
@@ -102,6 +102,35 @@ class Room {
     }
   }
 
+  Future<void> join({
+    required String roomName,
+    List<String>? expectedUserIds,
+  }) async {
+    fsm.callStateTransition('join');
+    try {
+      var lobbyService = client.lobbyService;
+      var joinRoomResp = await lobbyService!.joinRoom(roomName: roomName);
+      var cid = joinRoomResp.cid;
+      var addr = joinRoomResp.addr;
+      var sessionToken = (await lobbyService.authorize()).sessionToken;
+      gameConn = GameConnection();
+      await gameConn!.connect(
+        appId: client.appId,
+        server: addr,
+        gameVersion: client.gameVersion,
+        userId: client.userId,
+        sessionToken: sessionToken,
+      );
+      var room = await gameConn!
+          .joinRoom(roomName: cid, expectedUserIds: expectedUserIds);
+      _init(room);
+      fsm.callStateTransition('joined');
+    } catch (e) {
+      await close();
+      rethrow;
+    }
+  }
+
   _init(RoomOptions roomData) {
     name = roomData.cid;
     open = roomData.open.value;
@@ -124,28 +153,6 @@ class Room {
     } else {
       properties = {};
     }
-
-    // this._name = roomData.getCid();
-    // this._open = roomData.getOpen().getValue();
-    // this._visible = roomData.getVisible().getValue();
-    // this._maxPlayerCount = roomData.getMaxMembers();
-    // this._masterActorId = roomData.getMasterActorId();
-    // this._expectedUserIds = roomData.getExpectMembersList();
-    // this._players = {};
-    // roomData.getMembersList().forEach(member => {
-    //   const player = new Player(this);
-    //   player._init(member);
-    //   this._players[player.actorId] = player;
-    //   if (player._userId === this._client._userId) {
-    //     this._player = player;
-    //   }
-    // });
-    // // 属性
-    // if (roomData.getAttr()) {
-    //   this._properties = deserializeObject(roomData.getAttr());
-    // } else {
-    //   this._properties = {};
-    // }
   }
 
   Future<void> close() async {

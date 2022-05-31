@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import 'package:fixnum/fixnum.dart';
 import 'package:leancloud_play_flutter/lobby_service.dart';
 import 'package:leancloud_play_flutter/room.dart';
 
-const DEFAULT_GAME_VERSION = '0.0.1';
+const defaultGameVersion = '0.0.1';
 
 class Client {
   /// 玩家唯一 ID
@@ -20,7 +22,7 @@ class Client {
   /// 路由地址
   String? playServer;
 
-  late LobbyService lobbyService;
+  LobbyService? lobbyService;
 
   Room? room;
 
@@ -28,7 +30,7 @@ class Client {
     required this.userId,
     required this.appId,
     required this.appKey,
-    this.gameVersion = DEFAULT_GAME_VERSION,
+    this.gameVersion = defaultGameVersion,
     this.playServer,
   }) {
     if (playServer == null && !isInternationalApp(appId)) {
@@ -39,22 +41,35 @@ class Client {
   /// 建立连接
   Future<dynamic> connect() async {
     lobbyService = LobbyService(this);
-    return lobbyService.authorize();
+    return lobbyService!.authorize();
   }
 
   /// 重新连接
-  Future<dynamic> reconnec() async {
-    return lobbyService.authorize();
+  Future<dynamic> reconnect() async {
+    return lobbyService!.authorize();
   }
 
-  Future<void> reconnectAndRejoin() async {}
+  /// 重新连接并自动加入房间
+  Future<void> reconnectAndRejoin() async {
+    if (room == null) {
+      throw Exception('You have no room.');
+    }
+    // return await rejoinRoom
+    // TODO
+  }
 
-  Future<void> close() async {}
+  /// 关闭
+  Future<void> close() async {
+    // TODO
+    await room?.close();
+    _clear();
+  }
 
   Future<void> joinLobby() async {}
 
   Future<void> leaveLobby() async {}
 
+  /// 创建房间
   Future<Room> createRoom({
     String? roomName,
     bool? open,
@@ -92,6 +107,23 @@ class Client {
       expectedUserIds: expectedUserIds,
     );
     return room!;
+  }
+
+  Future<Room> joinRoom(
+      {required String roomName, List<String>? expectedUserIds}) async {
+    if (room != null) {
+      throw Exception('You are already in room');
+    }
+    // TODO lobby
+
+    room = Room(this);
+    await room!.join(roomName: roomName, expectedUserIds: expectedUserIds);
+    return room!;
+  }
+
+  void _clear() {
+    // TODO
+    room = null;
   }
 }
 
