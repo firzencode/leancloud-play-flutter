@@ -1,12 +1,11 @@
-import 'dart:math';
-
+import 'package:eventify/eventify.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:leancloud_play_flutter/lobby_service.dart';
 import 'package:leancloud_play_flutter/room.dart';
 
 const defaultGameVersion = '0.0.1';
 
-class Client {
+class Client extends EventEmitter {
   /// 玩家唯一 ID
   String userId;
 

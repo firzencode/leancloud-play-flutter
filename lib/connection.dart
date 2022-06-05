@@ -37,11 +37,11 @@ class Message {
   });
 }
 
-class ErrorEventData {
+class ConnectionErrorEventData {
   int code;
   String detail;
 
-  ErrorEventData({required this.code, required this.detail});
+  ConnectionErrorEventData({required this.code, required this.detail});
 }
 
 abstract class Connection extends EventEmitter {
@@ -286,7 +286,8 @@ abstract class Connection extends EventEmitter {
     var errorInfo = err.errorInfo;
     var code = errorInfo.reasonCode;
     var detail = errorInfo.detail;
-    emit(ERROR_EVENT, this, ErrorEventData(code: code, detail: detail));
+    emit(ERROR_EVENT, this,
+        ConnectionErrorEventData(code: code, detail: detail));
   }
 
   void handleUnknownMsg(CommandType cmd, OpType op, Body body) {

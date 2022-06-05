@@ -5,7 +5,6 @@ import 'package:leancloud_play_flutter/code_utils.dart';
 import 'package:leancloud_play_flutter/connection.dart';
 import 'package:leancloud_play_flutter/proto/google/protobuf/wrappers.pbserver.dart';
 import 'package:leancloud_play_flutter/proto/messages.pb.dart';
-import 'package:leancloud_play_flutter/proto/messages.pbjson.dart';
 import 'package:leancloud_play_flutter/receiver_group.dart';
 import 'package:leancloud_play_flutter/utils.dart';
 import 'package:path/path.dart' as path;
