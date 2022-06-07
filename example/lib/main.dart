@@ -117,6 +117,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 child: Text("click me to join room"),
               ),
+              TextButton(
+                onPressed: () async {
+                  await client2.joinRandomRoom();
+                  print("随机房间已加入");
+                },
+                child: Text("加入随机房间"),
+              ),
             ],
           ),
         ));

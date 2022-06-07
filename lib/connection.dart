@@ -295,11 +295,11 @@ abstract class Connection extends EventEmitter {
         '[UNKNOWN COMMAND] $userId : $flag -> $cmd/$op: ${body.writeToJson()}');
   }
 
-  pauseMessageQueue() {
+  void pauseMessageQueue() {
     isMessageQueueRunning = false;
   }
 
-  resumeMessageQueue() {
+  void resumeMessageQueue() {
     isMessageQueueRunning = true;
     while (messageQueue.isNotEmpty) {
       var msg = messageQueue.removeAt(0);

@@ -211,6 +211,13 @@ class GameConnection extends Connection {
     return jsonDecode(result.expectMembers);
   }
 
+  Future<dynamic> addRoomExpectedUserIds(List<String> expectedUserIds) async {
+    var sysProps = RoomSystemProperty();
+    sysProps.expectMembers = jsonEncode({r'$add': expectedUserIds});
+    var result = await setRoomSystemProps(sysProps);
+    return jsonDecode(result.expectMembers);
+  }
+
   Future<dynamic> removeRoomExpectedUserIds(
       List<String> expectedUserIds) async {
     var sysProps = RoomSystemProperty();

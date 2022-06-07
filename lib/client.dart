@@ -1,7 +1,9 @@
 import 'package:eventify/eventify.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:leancloud_play_flutter/lobby_service.dart';
-import 'package:leancloud_play_flutter/room.dart';
+
+import 'lobby.dart';
+import 'lobby_service.dart';
+import 'room.dart';
 
 const defaultGameVersion = '0.0.1';
 
@@ -22,6 +24,7 @@ class Client extends EventEmitter {
   String? playServer;
 
   LobbyService? lobbyService;
+  Lobby? _lobby;
 
   Room? room;
 
@@ -53,20 +56,25 @@ class Client extends EventEmitter {
     if (room == null) {
       throw Exception('You have no room.');
     }
-    // return await rejoinRoom
-    // TODO
+    await rejoinRoom(room!.name);
   }
 
   /// 关闭
   Future<void> close() async {
-    // TODO
+    await _lobby?.close();
     await room?.close();
     _clear();
   }
 
-  Future<void> joinLobby() async {}
+  /// 加入大厅
+  Future<void> joinLobby() async {
+    // TODO
+  }
 
-  Future<void> leaveLobby() async {}
+  /// 离开大厅
+  Future<void> leaveLobby() async {
+    // TODO
+  }
 
   /// 创建房间
   Future<Room> createRoom({
@@ -86,10 +94,7 @@ class Client extends EventEmitter {
       throw Exception('You are already in room.');
     }
 
-    // TODO
-    //     if (this._lobby) {
-    //   this._lobby.close();
-    // }
+    _lobby?.close();
 
     room = Room(this);
     await room!.create(
@@ -108,15 +113,76 @@ class Client extends EventEmitter {
     return room!;
   }
 
+  /// 加入房间
   Future<Room> joinRoom(
       {required String roomName, List<String>? expectedUserIds}) async {
     if (room != null) {
       throw Exception('You are already in room');
     }
-    // TODO lobby
+
+    _lobby?.close();
 
     room = Room(this);
     await room!.join(roomName: roomName, expectedUserIds: expectedUserIds);
+    return room!;
+  }
+
+  /// 重新加入房间
+  Future<Room> rejoinRoom(String roomName) async {
+    _lobby?.close();
+    room = Room(this);
+    await room!.rejoin(roomName);
+    return room!;
+  }
+
+  /// 随机加入或创建房间
+  Future<Room> joinOrCreateRoom({
+    required String roomName,
+    bool? open,
+    bool? visible,
+    int? emptyRoomTtl,
+    int? playerTtl,
+    int? maxPlayerCount,
+    Map<String, dynamic>? customRoomProperties,
+    List<String>? customRoomPropertyKeysForLobby,
+    Int64? flag,
+    List<String>? expectedUserIds,
+  }) async {
+    if (room != null) {
+      throw Exception('You are already in room');
+    }
+    _lobby?.close();
+
+    room = Room(this);
+    await room!.joinOrCreate(
+      roomName: roomName,
+      open: open,
+      visible: visible,
+      emptyRoomTtl: emptyRoomTtl,
+      playerTtl: playerTtl,
+      maxPlayerCount: maxPlayerCount,
+      customRoomProperties: customRoomProperties,
+      customRoomPropertyKeysForLobby: customRoomPropertyKeysForLobby,
+      flag: flag,
+      expectedUserIds: expectedUserIds,
+    );
+    return room!;
+  }
+
+  /// 随机加入房间
+  Future<Room> joinRandomRoom({
+    Map<String, dynamic>? matchProperties,
+    List<String>? expectedUserIds,
+  }) async {
+    if (room != null) {
+      throw Exception("You are already in room.");
+    }
+
+    _lobby?.close();
+
+    room = Room(this);
+    await room!.joinRamdom(
+        matchProperties: matchProperties, expectedUserIds: expectedUserIds);
     return room!;
   }
 
