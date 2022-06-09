@@ -1,8 +1,11 @@
 import 'package:eventify/eventify.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:leancloud_play_flutter/lobby_room.dart';
+import 'package:leancloud_play_flutter/player.dart';
 
 import 'lobby.dart';
 import 'lobby_service.dart';
+import 'receiver_group.dart';
 import 'room.dart';
 
 const defaultGameVersion = '0.0.1';
@@ -68,12 +71,20 @@ class Client extends EventEmitter {
 
   /// 加入大厅
   Future<void> joinLobby() async {
-    // TODO
+    if (_lobby != null) {
+      throw Exception('You are already in lobby.');
+    }
+
+    _lobby = Lobby(this);
+    await _lobby!.join();
   }
 
   /// 离开大厅
   Future<void> leaveLobby() async {
-    // TODO
+    if (_lobby == null) {
+      throw Exception('You are not in lobby yet');
+    }
+    await _lobby!.leave();
   }
 
   /// 创建房间
@@ -186,8 +197,157 @@ class Client extends EventEmitter {
     return room!;
   }
 
+  /// 随机匹配，匹配成功后并不加入房间，而是返回房间 id
+  Future<void> matchRandom(
+    String piggybackPeerId, {
+    Map<String, dynamic>? matchProperties,
+    List<String>? expectedUserIds,
+  }) async {
+    await lobbyService!.matchRandom(
+        piggybackPeerId: piggybackPeerId,
+        matchProperties: matchProperties,
+        expectedUserIds: expectedUserIds);
+  }
+
+  /// 设置房间开启 / 关闭
+  Future<void> setRoomOpen(bool open) async {
+    if (room == null) {
+      throw Exception("You are not in room yet.");
+    }
+    await room!.setOpen(open);
+  }
+
+  /// 设置房间可见 / 不可见
+  Future<void> setRoomVisible(bool visible) async {
+    if (room == null) {
+      throw Exception("You are not in room yet.");
+    }
+    await room!.setVisible(visible);
+  }
+
+  /// 设置房间允许的最大玩家数量
+  Future<void> setRoomMaxPlayerCount(int count) async {
+    if (room == null) {
+      throw Exception("You are not in room yet.");
+    }
+    await room!.setMaxPlayerCount(count);
+  }
+
+  /// 设置房间占位玩家 Id 列表
+  Future<void> setRoomExpectedUserIds(List<String> expectedUserIds) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.setExpectedUserIds(expectedUserIds);
+  }
+
+  /// 清空房间占位玩家 Id 列表
+  Future<void> clearRoomExpectedUserIds() async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.clearExpectedUserIds();
+  }
+
+  /// 增加房间占位玩家 Id 列表
+  Future<void> addRoomExpectedUserIds(List<String> expectedUserIds) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.addExpectedUserIds(expectedUserIds);
+  }
+
+  /// 移除房间占位玩家 Id 列表
+  Future<void> removeRoomExpectedUserIds(List<String> expectedUserIds) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.removeExpectedUserIds(expectedUserIds);
+  }
+
+  /// 设置房主
+  Future<void> setMaster(int newMasterId) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.setMaster(newMasterId);
+  }
+
+  /// 发送自定义消息
+  Future<void> sendEvent({
+    required int eventId,
+    Map<String, dynamic>? eventData,
+    ReceiveGroup? receiveGroup = ReceiveGroup.all,
+    List<int>? targetActorIds,
+  }) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.sendEvent(
+      eventId: eventId,
+      eventData: eventData,
+      receiveGroup: receiveGroup,
+      targetActorIds: targetActorIds,
+    );
+  }
+
+  /// 离开房间
+  Future<void> leaveRoom() async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.leave();
+  }
+
+  /// 踢人
+  Future<void> kickPlayer({
+    required int actorId,
+    int? code,
+    String? msg,
+  }) async {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    await room!.kickPlayer(actorId: actorId, code: code, msg: msg);
+  }
+
+  /// 暂停消息队列处理
+  void pauseMessageQueue() {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    room!.pauseMessageQueue();
+  }
+
+  /// 恢复消息队列处理
+  void resumeMessageQueue() {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    room!.resumeMessageQueue();
+  }
+
+  // get Room room => _room;
+
+  /// 获取当前玩家
+  Player? get player {
+    if (room == null) {
+      throw Exception('You are not in room yet.');
+    }
+    return room!.player;
+  }
+
+  /// 获取房间列表
+  List<LobbyRoom> get lobbyRoomList {
+    if (_lobby == null) {
+      throw Exception('You are not in lobby yet.');
+    }
+    return _lobby!.lobbyRoomList;
+  }
+
   void _clear() {
-    // TODO
+    clear();
+    _lobby = null;
     room = null;
   }
 }
