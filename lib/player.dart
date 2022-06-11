@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:leancloud_play_flutter/code_utils.dart';
 import 'package:leancloud_play_flutter/proto/messages.pb.dart';
 import 'package:leancloud_play_flutter/room.dart';
@@ -8,6 +10,8 @@ class Player {
   bool _active = true;
   Map<String, dynamic> _properties = {};
   Room _room;
+
+  Player({required Room room}) : _room = room;
 
   /// 玩家 ID
   String get userId => _userId;
@@ -28,14 +32,22 @@ class Player {
   }
 
   /// 设置玩家的自定义属性
-  void setCustomProperties(
+  Future<void> setCustomProperties(
     Map<String, dynamic> properties, {
     Map<String, dynamic>? expectedValues,
-  }) {
-    // return _room.
+  }) async {
+    var res = await _room.setPlayerProperties(actorId, properties,
+        expectedValues: expectedValues);
+    if (res.actorId == actorId) {
+      // TODO 原项目中没有进行反序列化，很奇怪
+      var attr = deserializeObject(res.changedProps);
+      if (attr != null) {
+        mergeProperties(attr);
+      }
+    }
   }
 
-  Player({required Room room}) : _room = room;
+  Map<String, dynamic> get customProperties => _properties;
 
   void init(RoomMember playerData) {
     _userId = playerData.pid;
@@ -45,5 +57,7 @@ class Player {
     _properties.addAll(deserializeObject(playerData.attr) ?? {});
   }
 
-  void mergeProperties(Map<String, dynamic> changedProperties) {}
+  void mergeProperties(Map<String, dynamic> changedProperties) {
+    _properties.addAll(changedProperties);
+  }
 }

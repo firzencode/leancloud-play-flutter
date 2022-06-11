@@ -317,7 +317,7 @@ class GameConnection extends Connection {
     // TODO 这里是否要对这个做反序列化？源码中是没有做的
     var changedProps = result.res.updateProperty.attr;
     return SetPlayerCustomPropertiesResult(
-        actorId: actorId, changedProps: changedProps);
+        actorId: aId, changedProps: changedProps);
   }
 
   @override

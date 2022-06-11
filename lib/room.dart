@@ -105,10 +105,8 @@ class Room {
       _gameConn!.on(ROOM_PROPERTIES_CHANGED_EVENT, this, (ev, context) {
         var changedProps = ev.eventData as Map<String, dynamic>;
         _mergeProperties(changedProps);
-        _client.emit(
-          Event.ROOM_CUSTOM_PROPERTIES_CHANGED,
-          this,
-        );
+        _client.emit(Event.ROOM_CUSTOM_PROPERTIES_CHANGED, this,
+            EventDataRoomCustomPropertiesChanged(changedProps: changedProps));
       });
 
       // TODO 看起来上面的 open 和 visible 应该是合并到这里了
@@ -124,8 +122,11 @@ class Room {
         var changedProps = (ev.eventData as Map)["changedProps"];
         var player = getPlayer(actorId);
         player.mergeProperties(changedProps);
-        _client.emit(Event.PLAYER_CUSTOM_PROPERTIES_CHANGED, this,
-            EventDataPlayerCustomPropertiesChanged(changedProps: changedProps));
+        _client.emit(
+            Event.PLAYER_CUSTOM_PROPERTIES_CHANGED,
+            this,
+            EventDataPlayerCustomPropertiesChanged(
+                actorId: player.actorId, changedProps: changedProps));
       });
 
       _gameConn!.on(PLAYER_OFFLINE_EVENT, this, (ev, context) {
@@ -598,7 +599,7 @@ class Room {
   }
 
   /// 设置玩家的自定义属性
-  Future<void> setPlayerProperties(
+  Future<SetPlayerCustomPropertiesResult> setPlayerProperties(
     int actorId,
     Map<String, dynamic> properties, {
     Map<String, dynamic>? expectedValues,
@@ -608,7 +609,7 @@ class Room {
           code: PlayErrorCode.STATE_ERROR,
           detail: 'Error state: ${_fsm.current?.identifier}');
     }
-    await _gameConn!.setPlayerCustomProperties(
+    return await _gameConn!.setPlayerCustomProperties(
         actorId: actorId,
         properties: properties,
         expectedValues: expectedValues);

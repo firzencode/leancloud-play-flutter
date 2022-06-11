@@ -152,7 +152,7 @@ List<int>? serializeObject(Map<String, dynamic>? obj) {
     var val = obj[key];
     var entry = GenericCollection_MapEntry();
     entry.key = key;
-    entry.val = val;
+    entry.val = serialize(val);
     entryList.add(entry);
   }
   var map = GenericCollection(mapEntryValue: entryList);

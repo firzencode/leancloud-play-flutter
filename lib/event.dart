@@ -122,9 +122,11 @@ class EventDataRoomSystemPropertiesChanged {
 }
 
 class EventDataPlayerCustomPropertiesChanged {
+  int actorId;
   Map<String, dynamic> changedProps;
 
-  EventDataPlayerCustomPropertiesChanged({required this.changedProps});
+  EventDataPlayerCustomPropertiesChanged(
+      {required this.actorId, required this.changedProps});
 }
 
 class EventDataPlayerActivityChanged {
