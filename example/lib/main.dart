@@ -3,7 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:leancloud_play_flutter/client.dart';
 import 'package:leancloud_play_flutter/event.dart';
+import 'package:leancloud_play_flutter/receiver_group.dart';
 import 'package:leancloud_play_flutter_example/secret.dart';
+
+// 自定义事件 ID
+const EVENT_CUSTOM_1 = 1;
 
 void main() {
   runApp(const ExampleApp());
@@ -118,6 +122,17 @@ class _ClientWidgetState extends State<ClientWidget> {
       var data = ev.eventData as EventDataRoomCustomPropertiesChanged;
       msg('房间属性发生了变化: ${data.changedProps.toString()}');
     });
+
+    widget.client.on(Event.CUSTOM_EVENT, context, (ev, context) {
+      var data = ev.eventData as EventDataCustomEvent;
+      msg('收到了自定义消息 ${data.eventId} : ${data.eventData.toString()}');
+    });
+
+    widget.client.on(Event.LOBBY_ROOM_LIST_UPDATED, context, (ev, context) {
+      // var data = ev.eventData as EventDataROOM
+      var roomList = widget.client.lobbyRoomList;
+      msg('大厅房间更新: ${roomList.map((e) => e.roomName).toList().toString()}');
+    });
   }
 
   @override
@@ -158,6 +173,22 @@ class _ClientWidgetState extends State<ClientWidget> {
                 OutlinedButton(
                   onPressed: () async {
                     try {
+                      var room = await widget.client.createRoom(
+                          roomName:
+                              'room-lobby-${Random().nextInt(1000).toString()}',
+                          customRoomPropertyKeysForLobby: [
+                            Random().nextInt(1000).toString()
+                          ]);
+                      msg('房间已建立，房间名: ${room.name}');
+                    } catch (e) {
+                      msg(e.toString());
+                    }
+                  },
+                  child: const Text('建立大厅房间'),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
                       var room =
                           await widget.client.joinRoom(roomName: 'room1');
                       msg("已加入房间，房间名: ${room.name}");
@@ -178,9 +209,42 @@ class _ClientWidgetState extends State<ClientWidget> {
                   },
                   child: const Text('退出房间'),
                 ),
-                OutlinedButton(onPressed: () {}, child: const Text('加入大厅')),
-                OutlinedButton(onPressed: () {}, child: const Text('退出大厅')),
-                OutlinedButton(onPressed: () {}, child: const Text('发送自定义事件')),
+                OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        await widget.client.joinLobby();
+                        msg('已加入大厅');
+                      } catch (e, ts) {
+                        msg(e.toString());
+                        print(ts);
+                        await widget.client.close();
+                      }
+                    },
+                    child: const Text('加入大厅')),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      await widget.client.leaveLobby();
+                      msg('已退出大厅');
+                    } catch (e, ts) {
+                      msg(e.toString());
+                      print(ts);
+                    }
+                  },
+                  child: const Text('退出大厅'),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      var roomList = widget.client.lobbyRoomList;
+                      msg('大厅房间读取: ${roomList.map((e) => e.roomName).toList().toString()}');
+                    } catch (e, ts) {
+                      msg(e.toString());
+                      print(ts);
+                    }
+                  },
+                  child: const Text('显示大厅房间'),
+                ),
                 OutlinedButton(
                   onPressed: () async {
                     try {
@@ -205,7 +269,58 @@ class _ClientWidgetState extends State<ClientWidget> {
                     }
                   },
                   child: const Text('修改房间自定义属性'),
-                )
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      await widget.client.sendEvent(
+                        eventId: EVENT_CUSTOM_1,
+                        eventData: {"content": "haha"},
+                        receiveGroup: ReceiveGroup.all,
+                      );
+                    } catch (e, ts) {
+                      msg(e.toString());
+                      print(ts);
+                    }
+                  },
+                  child: const Text(
+                    '发送自定义事件给所有人',
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      await widget.client.sendEvent(
+                        eventId: EVENT_CUSTOM_1,
+                        eventData: {"rndNum": Random().nextInt(100)},
+                        receiveGroup: ReceiveGroup.others,
+                      );
+                    } catch (e, ts) {
+                      msg(e.toString());
+                      print(ts);
+                    }
+                  },
+                  child: const Text(
+                    '发送自定义事件给其他人',
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      await widget.client.sendEvent(
+                        eventId: EVENT_CUSTOM_1,
+                        eventData: {"rndNum": Random().nextInt(100)},
+                        receiveGroup: ReceiveGroup.masterClient,
+                      );
+                    } catch (e, ts) {
+                      msg(e.toString());
+                      print(ts);
+                    }
+                  },
+                  child: const Text(
+                    '发送自定义事件给主机',
+                  ),
+                ),
               ],
             ),
           ),

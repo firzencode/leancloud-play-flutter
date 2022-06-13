@@ -133,7 +133,7 @@ class Room {
         var actorId = ev.eventData as int;
         var player = getPlayer(actorId);
         player.active = false;
-        _client.emit(Event.PLAYER_ACTIVITY_CHANGED,
+        _client.emit(Event.PLAYER_ACTIVITY_CHANGED, this,
             EventDataPlayerActivityChanged(player: player));
       });
 
@@ -141,7 +141,7 @@ class Room {
         var actorId = ev.eventData as int;
         var player = getPlayer(actorId);
         player.active = true;
-        _client.emit(Event.PLAYER_ACTIVITY_CHANGED,
+        _client.emit(Event.PLAYER_ACTIVITY_CHANGED, this,
             EventDataPlayerActivityChanged(player: player));
       });
 
@@ -153,6 +153,7 @@ class Room {
 
         _client.emit(
             Event.CUSTOM_EVENT,
+            this,
             EventDataCustomEvent(
                 eventId: eventId, eventData: eventData, senderId: senderId));
       });

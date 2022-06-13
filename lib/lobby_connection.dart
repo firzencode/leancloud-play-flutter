@@ -58,7 +58,7 @@ class LobbyConnection extends Connection {
     required String sessionToken,
   }) {
     return Uri.parse(
-      path.join(server, '/1/multiplayer/lobby/websocket'),
+      '$server/1/multiplayer/lobby/websocket',
     ).replace(
       queryParameters: {
         'appId': appId,

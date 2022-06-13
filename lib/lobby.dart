@@ -44,6 +44,7 @@ class Lobby {
     _fsm['lobby'].onExit(() {
       _lobbyConn!.clear();
     });
+    _fsm.start();
   }
 
   Future<void> join() async {
