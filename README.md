@@ -1,39 +1,46 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# leancloud-play-flutter
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+这个是基于 LeanCloud 的 Play SDK JS 版导出的非官方 Flutter 版本，
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+目前仅支持 Mobile 端
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+官方 SDK：https://github.com/leancloud/Play-SDK-JS
 
-## Features
+## Install
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+```yaml
+leancloud_play_flutter:
+git: 
+    url: git@github.com:firzencode/leancloud-play-flutter.git
+    ref: master
+```
+## Example
 
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+调试时，请在example/lib下增加 secret.dart，内容如下
 
 ```dart
-const like = 'sample';
+String getAppId() {
+  return '这里填写你的 APP ID';
+}
+
+String getAppKey() {
+  return '这里填写你的 APP Key';
+}
+
+String getServer() {
+  return '这里填写你绑定的 API Server';
+}
+
 ```
+## Todo List
 
-## Additional information
+- 更完整的测试 Example
+- 补充单元测试
+- 补充文档
+- 支持 Web 端
+- 测试 Desktop 端
+- 整理 Event 通知体系
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+## Known Issue
+
+- Lobby 加入后，收不到实时更新的大厅房间列表
